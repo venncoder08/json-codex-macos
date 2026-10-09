@@ -9,9 +9,9 @@
     "build:web": "tsc --noEmit && vite build",
     "build": "npm run build:web && electron-builder",
     "build:win": "npm run build:web && electron-builder --win nsis -c.electronDist=node_modules/electron/dist",
-    "build:mac": "npm run build:web && electron-builder --mac dmg --universal",
-    "build:mac:arm64": "npm run build:web && electron-builder --mac dmg --arm64",
-    "build:mac:x64": "npm run build:web && electron-builder --mac dmg --x64",
+    "build:mac": "npm run build:web && electron-builder --mac dmg --universal --publish never",
+    "build:mac:arm64": "npm run build:web && electron-builder --mac dmg --arm64 --publish never",
+    "build:mac:x64": "npm run build:web && electron-builder --mac dmg --x64 --publish never",
     "verify:mac": "node scripts/verify-macos.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
