@@ -1,0 +1,64 @@
+name: Build macOS DMG
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build universal DMG with local ad-hoc signature
+        run: npm run build:mac -- --config.mac.identity=- --config.mac.hardenedRuntime=false
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - name: Verify bundle on Apple Silicon
+        run: npm run verify:mac
+      - name: Verify disk image and record checksum
+        run: |
+          hdiutil verify release/json-codex-macos-universal.dmg
+          cd release
+          shasum -a 256 json-codex-macos-universal.dmg > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: json-codex-macos-universal
+          path: |
+            release/json-codex-macos-universal.dmg
+            release/SHA256SUMS.txt
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14
+
+  verify-intel:
+    needs: build
+    runs-on: macos-15-intel
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          name: json-codex-macos-universal
+          path: release
+      - name: Verify the same DMG on Intel
+        shell: bash
+        run: |
+          cd release
+          shasum -a 256 -c SHA256SUMS.txt
+          hdiutil verify json-codex-macos-universal.dmg
+          mkdir "$RUNNER_TEMP/json-codex-dmg"
+          hdiutil attach json-codex-macos-universal.dmg -readonly -nobrowse -mountpoint "$RUNNER_TEMP/json-codex-dmg"
+          trap 'hdiutil detach "$RUNNER_TEMP/json-codex-dmg"' EXIT
+          node ../scripts/verify-macos.mjs "$RUNNER_TEMP/json-codex-dmg/JSON Codex.app" universal

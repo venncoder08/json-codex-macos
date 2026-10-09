@@ -1,0 +1,84 @@
+{
+  "name": "json-codex",
+  "version": "1.0.0",
+  "description": "Configure Codex to use 9Router without exposing API keys in shell commands.",
+  "type": "module",
+  "main": "electron/main.mjs",
+  "scripts": {
+    "dev": "npm run build:web && electron .",
+    "build:web": "tsc --noEmit && vite build",
+    "build": "npm run build:web && electron-builder",
+    "build:win": "npm run build:web && electron-builder --win nsis -c.electronDist=node_modules/electron/dist",
+    "build:mac": "npm run build:web && electron-builder --mac dmg --universal",
+    "build:mac:arm64": "npm run build:web && electron-builder --mac dmg --arm64",
+    "build:mac:x64": "npm run build:web && electron-builder --mac dmg --x64",
+    "verify:mac": "node scripts/verify-macos.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "codex",
+    "9router",
+    "electron"
+  ],
+  "author": "JSON Codex",
+  "license": "MIT",
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/manrope": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "sharp": "^0.35.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  },
+  "build": {
+    "appId": "com.jsoncodex.setup",
+    "productName": "JSON Codex",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "json-codex-window.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "category": "public.app-category.developer-tools",
+      "artifactName": "json-codex-macos-${arch}.${ext}",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    }
+  }
+}
